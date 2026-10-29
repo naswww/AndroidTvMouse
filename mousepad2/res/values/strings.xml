@@ -85,7 +85,7 @@
 
     <string name="btn_about">关于</string>
     <string name="about_title">关于</string>
-    <string name="about_body">安卓电视红外线遥控模拟鼠标。需打开 ADB 调试。免 root 权限，免无障碍。\n\n版本 %1$s · %2$s\n许可证 GNU GPL v3.0\n\n· 发布版使用独立 adb 密钥，首次安装后电视会弹一次「允许 USB 调试」，授权即可。\n· 构建机请勿删除 build/debug.keystore，后续版本靠它覆盖升级。\n\nGitHub: https://github.com/naswww/TVmouse</string>
+    <string name="about_body">安卓电视红外遥控鼠标。软件编码由 WorkBuddy 调用 DeepSeek 编写。\n\n版本 %1$s · %2$s\n许可证 GNU GPL v3.0\n\n· 发布版使用独立 adb 密钥，首次安装后电视会弹一次「允许 USB 调试」，授权即可。\n· 构建机请勿删除 build/debug.keystore，后续版本靠它覆盖升级。\n\nGitHub: https://github.com/naswww/TVmouse</string>
     <string name="ok">确定</string>
 
     <string name="lang_prefix">语言：</string>

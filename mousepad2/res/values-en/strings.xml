@@ -85,7 +85,7 @@
 
     <string name="btn_about">About</string>
     <string name="about_title">About</string>
-    <string name="about_body">Mouse emulation for Android TV IR remotes. Requires ADB debugging. No root, no accessibility service.\n\nVersion %1$s · %2$s\nLicense GNU GPL v3.0\n\n· The release build uses a dedicated adb key. On first launch the TV shows an Allow USB debugging prompt once — just authorize it.\n· Do not delete build/debug.keystore on the build machine; future versions need it to upgrade in place.\n\nGitHub: https://github.com/naswww/TVmouse</string>
+    <string name="about_body">Android TV IR remote mouse. Code written with WorkBuddy using DeepSeek.\n\nVersion %1$s · %2$s\nLicense GNU GPL v3.0\n\n· The release build uses a dedicated adb key. On first launch the TV shows an Allow USB debugging prompt once — just authorize it.\n· Do not delete build/debug.keystore on the build machine; future versions need it to upgrade in place.\n\nGitHub: https://github.com/naswww/TVmouse</string>
     <string name="ok">OK</string>
 
     <string name="lang_prefix">Lang: </string>
