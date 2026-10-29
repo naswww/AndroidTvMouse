@@ -160,7 +160,11 @@ public class MouseService extends Service {
             // 不使用 -p 回放模式：暂停态直接放开独占，遥控恢复原生。
             // 切换键在「遥控→鼠标」时可能让电视弹一次 U 模式提示，可忽略；
             // 换来的是两个方向都能可靠切换。
+            // 屏幕尺寸用于滚轮贴边补偿：指针贴顶/贴底时先往中间挪 1/4 屏
+            int sw = getResources().getDisplayMetrics().widthPixels;
+            int sh = getResources().getDisplayMetrics().heightPixels;
             String cmd = "/data/local/tmp/tvmouse -s " + speed + " -i " + start + " -h " + hide + " -b " + back
+                    + " -W " + sw + " -H " + sh
                     + (toggle > 0 ? " -t " + toggle : "")
                     + (grab ? " -g" : "");
             // 前台挂着跑，连接不断，守护进程就不断

@@ -7,7 +7,7 @@
  *   armv7a-linux-androideabi21-clang -O2 -o tvmouse tvmouse.c
  *
  * 用法：
- *   tvmouse [-g] [-s 最高速度] [-i 起步速度] [-h 光标保持秒数] [-b right|side|back] [-t 切换键] [-k 键设备] [-m 鼠标设备] [-n]
+ *   tvmouse [-g] [-s 最高速度] [-i 起步速度] [-h 光标保持秒数] [-b right|side|back] [-t 切换键] [-W 屏宽] [-H 屏高] [-k 键设备] [-m 鼠标设备] [-n]
  *   tvmouse -l [-k 键设备]      学习模式：只打印按键码，不做任何动作
  *
  * 映射文件（默认 /data/local/tmp/tvmouse.map），每行 `键码=动作`：
@@ -57,6 +57,9 @@ static int g_grabbed = 0;
 static int g_pending_grab = 0;  /* 释放态按下切换键后，等抬起再重新抓取 */
 static long long g_hide_ms = 15000;  /* 光标保持可见时长，0=永不隐藏 */
 static double g_v0 = 30.0;           /* 起步速度 px/s：决定轻点一下走多远 */
+static int g_screen_w = 1920;        /* 屏幕宽，-W 传入，用于滚轮贴边补偿 */
+static int g_screen_h = 1080;        /* 屏幕高，-H 传入 */
+static int g_pos_x = -1, g_pos_y = -1;  /* 估算光标位置，-1=未初始化 */
 static int g_passthrough = 0;        /* -p：释放态仍独占，按键回放给红外设备 */
 static long long g_skip_until = 0;   /* 回放期间忽略自己写回去的事件 */
 
@@ -92,6 +95,18 @@ static void click_btn(int fd, int btn) {
 }
 
 static void wheel(int fd, int dir) {
+    /* 贴边补偿：光标在屏幕最上/最下时，滚轮会落在状态栏/导航栏上导致无效，
+       先往屏幕中间挪 1/4 屏，再发滚轮。 */
+    if (g_pos_y >= 0 && g_screen_h > 0) {
+        int quarter = g_screen_h / 4;
+        if (g_pos_y < g_screen_h / 8) {
+            move_by(fd, 0, quarter);
+            g_pos_y += quarter;
+        } else if (g_pos_y > g_screen_h * 7 / 8) {
+            move_by(fd, 0, -quarter);
+            g_pos_y -= quarter;
+        }
+    }
     emit(fd, EV_REL, REL_WHEEL, dir);
     emit(fd, EV_SYN, SYN_REPORT, 0);
 }
@@ -214,6 +229,8 @@ int main(int argc, char **argv) {
         else if (!strcmp(argv[i], "-p")) g_passthrough = 1;
         else if (!strcmp(argv[i], "-c") && i + 1 < argc) mapfile = argv[++i];
         else if (!strcmp(argv[i], "-t") && i + 1 < argc) g_toggle = atoi(argv[++i]);
+        else if (!strcmp(argv[i], "-W") && i + 1 < argc) g_screen_w = atoi(argv[++i]);
+        else if (!strcmp(argv[i], "-H") && i + 1 < argc) g_screen_h = atoi(argv[++i]);
         else if (!strcmp(argv[i], "-b") && i + 1 < argc) {
             const char *m = argv[++i];
             if (!strcmp(m, "side")) g_back_mode = BACK_SIDE;
@@ -233,6 +250,9 @@ int main(int argc, char **argv) {
     g_mfd = mfd;
 
     load_map(mapfile);
+
+    if (g_pos_x < 0) g_pos_x = g_screen_w / 2;
+    if (g_pos_y < 0) g_pos_y = g_screen_h / 2;
 
     if (grab) {
         if (ioctl(kfd, EVIOCGRAB, 1) < 0) {
@@ -349,6 +369,12 @@ int main(int argc, char **argv) {
                 acc_x -= mx;
                 acc_y -= my;
                 move_by(mfd, mx, my);
+                g_pos_x += mx;
+                g_pos_y += my;
+                if (g_pos_x < 0) g_pos_x = 0;
+                if (g_pos_x > g_screen_w) g_pos_x = g_screen_w;
+                if (g_pos_y < 0) g_pos_y = 0;
+                if (g_pos_y > g_screen_h) g_pos_y = g_screen_h;
                 last_move = t;
                 last_user_move = t;
             }
