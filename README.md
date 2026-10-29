@@ -54,7 +54,7 @@ bash scripts/build-release.sh 2.1.5 17 tvmouse-v2.1.5-release
 
 ## 适配
 
-- 已适配：海信 VIDAA-型号 CN3V75（0100）红外线遥控器。
+- 已适配：海信 VIDDA-型号 CN3V75（0100）红外线遥控器。
 - 其它品牌 / 型号：ADB 地址可改；遥控器键码可用 App 内的学习功能重新绑定。
 
 ## 许可证
