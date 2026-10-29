@@ -23,7 +23,7 @@ TVMouse 借助电视自带的 adb 调试能力，把红外遥控器按键换算�
 
 所有映射都可以在 App 里重新绑定。
 
-![鼠标模式](docs/screenshots/02-mouse-mode.png)
+![English UI](docs/screenshots/02-main-en.png)
 
 ## 安装
 
