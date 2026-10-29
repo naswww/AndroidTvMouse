@@ -1,4 +1,4 @@
-# TvMouse · 电视遥控鼠标
+# TvMouse · 安卓电视遥控鼠标
 
 **中文** · [English](README.en.md)
 
