@@ -54,7 +54,7 @@ The build script generates an adb key under `mousepad2/assets/` if missing (neve
 
 ## Compatibility
 
-- Tested on: Hisense VIDAA (model CN3V75).
+- Tested on: Hisense Vidda Model CN3V75 (0100) Infrared Remote Control‌.
 - Other brands / models: the ADB address is configurable; remote key codes can be rebound with the app's learn mode.
 
 ## License
