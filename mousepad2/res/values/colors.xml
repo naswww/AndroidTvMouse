@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 设计令牌 · 颜色
+     10-foot UI：深色底 + 高对比文字，保证 3 米外可读 -->
+<resources>
+    <!-- 背景层 -->
+    <color name="bg">#0E1319</color>
+    <color name="surface">#18212C</color>
+    <color name="surface_alt">#1F2A36</color>
+    <color name="surface_hover">#26333F</color>
+
+    <!-- 描边 -->
+    <color name="border">#2A3846</color>
+    <color name="border_focus">#4FA3FF</color>
+
+    <!-- 文字 -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#9FB2C6</color>
+    <color name="text_muted">#6B7C8F</color>
+
+    <!-- 语义色 -->
+    <color name="accent">#7FE3A1</color>
+    <color name="accent_dim">#1C3A2C</color>
+    <color name="warn">#FFB454</color>
+    <color name="warn_dim">#3A2E1A</color>
+    <color name="danger">#FF6B6B</color>
+</resources>

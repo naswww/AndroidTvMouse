@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">遥控鼠标</string>
+    <string name="app_title">遥控鼠标</string>
+    <string name="not_set">未设置</string>
+
+    <string name="header_hint">方向键移动 · OK 点击 · 切换键换模式</string>
+    <string name="header_hint2">电视重启后需重新打开本应用点一次「启动鼠标」</string>
+    <string name="adb_checking">ADB 检测中</string>
+    <string name="adb_connected">ADB 已连接</string>
+    <string name="adb_disconnected">ADB 未连接</string>
+
+    <string name="state_mouse">鼠标模式</string>
+    <string name="state_remote">电视遥控模式</string>
+    <string name="state_connecting">正在接管</string>
+    <string name="state_learning">学习中</string>
+    <string name="state_waiting">等待 adb</string>
+    <string name="state_fail">失败</string>
+
+    <string name="detail_none"></string>
+    <string name="detail_released">已释放遥控</string>
+    <string name="detail_waiting">第 1 次连接失败，重试中…</string>
+    <string name="detail_connecting">连接本机 adb…</string>
+    <string name="detail_running">守护进程运行中</string>
+    <string name="detail_paused">遥控已恢复原生，再按切换键接管</string>
+    <string name="detail_exited">守护进程已退出，请重新点「启动鼠标」</string>
+    <string name="detail_learning">请按遥控器上想绑定的键（6 秒）</string>
+    <string name="detail_learn_fail">6 秒内没有收到按键</string>
+    <string name="detail_back_reserved">返回键请用下方的「返回键」按钮设置</string>
+
+    <string name="section_control">控制</string>
+    <string name="btn_start">启动鼠标</string>
+    <string name="btn_release">释放遥控</string>
+    <string name="toast_starting">正在启动鼠标…</string>
+    <string name="toast_released">已释放</string>
+
+    <string name="section_params">参数</string>
+    <string name="param_speed">最高速度</string>
+    <string name="param_start">起步速度</string>
+    <string name="param_hold">光标保持</string>
+    <string name="unit_speed">px/s</string>
+    <string name="unit_sec">s</string>
+
+    <string name="section_addr">ADB 地址</string>
+    <string name="addr_hint">127.0.0.1:5555</string>
+    <string name="addr_edit">改</string>
+    <string name="about_text">海信电视红外遥控器专用鼠标，为远距离观看而设计</string>
+    <string name="about_version">当前版本 %1$s · 开源发布</string>
+
+    <string name="section_remote">遥控按键</string>
+    <string name="key_power">电源</string>
+    <string name="key_live">直播</string>
+    <string name="key_source">信号源</string>
+    <string name="key_app">小聚</string>
+    <string name="key_settings">设置</string>
+    <string name="key_back">返回</string>
+    <string name="key_home">主页</string>
+    <string name="key_menu">菜单</string>
+    <string name="key_dpad">方向</string>
+    <string name="key_volume">音量</string>
+    <string name="mouse_left">左键</string>
+    <string name="mouse_right">右键</string>
+    <string name="mouse_middle">中键</string>
+    <string name="mouse_wheelup">滚轮上</string>
+    <string name="mouse_wheeldown">滚轮下</string>
+    <string name="mouse_move">移动光标</string>
+    <string name="mouse_toggle">切换</string>
+
+    <string name="section_map">按键映射</string>
+    <string name="map_hint">点一下再按键</string>
+    <string name="act_left">鼠标左键</string>
+    <string name="act_right">鼠标右键</string>
+    <string name="act_wheelup">滚轮上</string>
+    <string name="act_wheeldown">滚轮下</string>
+    <string name="act_home">主页</string>
+    <string name="act_toggle">鼠标/遥控切换</string>
+
+    <string name="back_prefix">返回键：</string>
+    <string name="back_right">鼠标右键</string>
+    <string name="back_side">鼠标侧键</string>
+    <string name="back_native">遥控返回</string>
+
+    <string name="btn_restore">恢复默认预设</string>
+    <string name="toast_restored">已恢复默认预设</string>
+
+    <string name="btn_about">关于</string>
+    <string name="about_title">关于</string>
+    <string name="about_body">安卓电视红外线遥控模拟鼠标。需打开 ADB 调试。免 root 权限，免无障碍。\n\n版本 %1$s · %2$s\n许可证 GNU GPL v3.0\n\n· 发布版使用独立 adb 密钥，首次安装后电视会弹一次「允许 USB 调试」，授权即可。\n· 构建机请勿删除 build/debug.keystore，后续版本靠它覆盖升级。\n\nGitHub: https://github.com/naswww/TVmouse</string>
+    <string name="ok">确定</string>
+
+    <string name="lang_prefix">语言：</string>
+    <string name="lang_auto">自动</string>
+    <string name="lang_zh">中文</string>
+    <string name="lang_en">English</string>
+</resources>

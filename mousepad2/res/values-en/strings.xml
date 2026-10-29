@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TV Mouse</string>
+    <string name="app_title">TV Mouse</string>
+    <string name="not_set">Not set</string>
+
+    <string name="header_hint">Arrows move · OK clicks · Switch key toggles mode</string>
+    <string name="header_hint2">Reopen this app and tap Start Mouse after a TV restart</string>
+    <string name="adb_checking">ADB checking</string>
+    <string name="adb_connected">ADB connected</string>
+    <string name="adb_disconnected">ADB offline</string>
+
+    <string name="state_mouse">Mouse Mode</string>
+    <string name="state_remote">TV Mode</string>
+    <string name="state_connecting">Connecting</string>
+    <string name="state_learning">Learning</string>
+    <string name="state_waiting">Waiting for adb</string>
+    <string name="state_fail">Failed</string>
+
+    <string name="detail_none"></string>
+    <string name="detail_released">Remote released</string>
+    <string name="detail_waiting">First attempt failed, retrying…</string>
+    <string name="detail_connecting">Connecting to local adb…</string>
+    <string name="detail_running">Daemon running</string>
+    <string name="detail_paused">Remote restored, press the switch key to take over</string>
+    <string name="detail_exited">Daemon exited, tap Start Mouse again</string>
+    <string name="detail_learning">Press the key you want to bind (6 s)</string>
+    <string name="detail_learn_fail">No key received in 6 s</string>
+    <string name="detail_back_reserved">Use the Back key button below instead</string>
+
+    <string name="section_control">Controls</string>
+    <string name="btn_start">Start Mouse</string>
+    <string name="btn_release">Release Remote</string>
+    <string name="toast_starting">Starting mouse…</string>
+    <string name="toast_released">Released</string>
+
+    <string name="section_params">Parameters</string>
+    <string name="param_speed">Max Speed</string>
+    <string name="param_start">Start Speed</string>
+    <string name="param_hold">Cursor Hold</string>
+    <string name="unit_speed">px/s</string>
+    <string name="unit_sec">s</string>
+
+    <string name="section_addr">ADB Address</string>
+    <string name="addr_hint">127.0.0.1:5555</string>
+    <string name="addr_edit">Edit</string>
+    <string name="about_text">Mouse for Hisense TV IR remotes, built for 10-foot use</string>
+    <string name="about_version">Version %1$s · Open source</string>
+
+    <string name="section_remote">Remote Keys</string>
+    <string name="key_power">Power</string>
+    <string name="key_live">Live</string>
+    <string name="key_source">Input</string>
+    <string name="key_app">Voice</string>
+    <string name="key_settings">Setup</string>
+    <string name="key_back">Back</string>
+    <string name="key_home">Home</string>
+    <string name="key_menu">Menu</string>
+    <string name="key_dpad">D-Pad</string>
+    <string name="key_volume">Vol</string>
+    <string name="mouse_left">Left</string>
+    <string name="mouse_right">Right</string>
+    <string name="mouse_middle">Mid</string>
+    <string name="mouse_wheelup">Wheel↑</string>
+    <string name="mouse_wheeldown">Wheel↓</string>
+    <string name="mouse_move">Cursor</string>
+    <string name="mouse_toggle">Toggle</string>
+
+    <string name="section_map">Key Mapping</string>
+    <string name="map_hint">Tap row, press key</string>
+    <string name="act_left">Left Click</string>
+    <string name="act_right">Right Click</string>
+    <string name="act_wheelup">Wheel Up</string>
+    <string name="act_wheeldown">Wheel Down</string>
+    <string name="act_home">Home</string>
+    <string name="act_toggle">Mode Toggle</string>
+
+    <string name="back_prefix">Back:&#160;</string>
+    <string name="back_right">Right Click</string>
+    <string name="back_side">Side Click</string>
+    <string name="back_native">TV Back</string>
+
+    <string name="btn_restore">Restore Defaults</string>
+    <string name="toast_restored">Defaults restored</string>
+
+    <string name="btn_about">About</string>
+    <string name="about_title">About</string>
+    <string name="about_body">Mouse emulation for Android TV IR remotes. Requires ADB debugging. No root, no accessibility service.\n\nVersion %1$s · %2$s\nLicense GNU GPL v3.0\n\n· The release build uses a dedicated adb key. On first launch the TV shows an Allow USB debugging prompt once — just authorize it.\n· Do not delete build/debug.keystore on the build machine; future versions need it to upgrade in place.\n\nGitHub: https://github.com/naswww/TVmouse</string>
+    <string name="ok">OK</string>
+
+    <string name="lang_prefix">Lang: </string>
+    <string name="lang_auto">Auto</string>
+    <string name="lang_zh">中文</string>
+    <string name="lang_en">English</string>
+</resources>
