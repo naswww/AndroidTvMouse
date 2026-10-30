@@ -212,6 +212,26 @@ static int learn_mode(const char *keydev) {
     return 0;
 }
 
+/* 扫描 /dev/input/event*，找带 REL_X/REL_Y + BTN_LEFT 的鼠标设备。
+   换无线接收器后 event 编号会变，不能再硬编码 event4。 */
+static const char *find_mouse_dev(char *buf, size_t buflen) {
+    for (int i = 0; i < 32; i++) {
+        snprintf(buf, buflen, "/dev/input/event%d", i);
+        int fd = open(buf, O_RDWR | O_NONBLOCK);
+        if (fd < 0) continue;
+        unsigned long relbit[2] = {0}, keybit[16] = {0};
+        int ok = ioctl(fd, EVIOCGBIT(EV_REL, sizeof relbit), relbit) >= 0
+              && ioctl(fd, EVIOCGBIT(EV_KEY, sizeof keybit), keybit) >= 0
+              && (relbit[0] & (1UL << REL_X))
+              && (relbit[0] & (1UL << REL_Y))
+              && (keybit[BTN_LEFT / (8 * sizeof(unsigned long))]
+                  & (1UL << (BTN_LEFT % (8 * sizeof(unsigned long)))));
+        close(fd);
+        if (ok) return buf;
+    }
+    return NULL;
+}
+
 int main(int argc, char **argv) {
     const char *keydev = "/dev/input/event1";
     const char *mousedev = "/dev/input/event4";
@@ -246,7 +266,21 @@ int main(int argc, char **argv) {
     int kfd = open(keydev, g_passthrough ? O_RDWR : O_RDONLY);
     if (kfd < 0) { fprintf(stderr, "open %s: %s\n", keydev, strerror(errno)); return 1; }
     int mfd = open(mousedev, O_WRONLY);
-    if (mfd < 0) { fprintf(stderr, "open %s: %s\n", mousedev, strerror(errno)); return 1; }
+    if (mfd < 0) {
+        char mbuf[64];
+        const char *found = find_mouse_dev(mbuf, sizeof mbuf);
+        if (found) {
+            mousedev = found;
+            mfd = open(mousedev, O_WRONLY);
+        }
+    }
+    if (mfd < 0) {
+        printf("ERR=no_mouse\n");
+        fflush(stdout);
+        fprintf(stderr, "no mouse device found\n");
+        close(kfd);
+        return 3;
+    }
     g_mfd = mfd;
 
     load_map(mapfile);

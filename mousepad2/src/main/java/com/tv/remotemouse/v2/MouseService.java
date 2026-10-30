@@ -169,7 +169,9 @@ public class MouseService extends Service {
                     + (grab ? " -g" : "");
             // 前台挂着跑，连接不断，守护进程就不断
             c.shell(cmd, 0, chunk -> {
-                if (chunk.contains("STATE=PAUSED")) setStatus("paused", "detail_paused");
+                if (chunk.contains("ERR=no_mouse")) setStatus("fail", "detail_no_mouse");
+                else if (chunk.contains("ERR=grab_failed")) setStatus("fail", "detail_grab_failed");
+                else if (chunk.contains("STATE=PAUSED")) setStatus("paused", "detail_paused");
                 else if (chunk.contains("STATE=ACTIVE")) setStatus("active", "detail_running");
                 else if (chunk.contains("pt=")) setStatus("active", "detail_running");
             });

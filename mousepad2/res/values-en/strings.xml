@@ -24,6 +24,8 @@
     <string name="detail_running">Daemon running</string>
     <string name="detail_paused">Remote restored, press the switch key to take over</string>
     <string name="detail_exited">Daemon exited, tap Start Mouse again</string>
+    <string name="detail_no_mouse">No mouse device found. Check the receiver / USB port.</string>
+    <string name="detail_grab_failed">Cannot grab the remote device. Reboot the TV and retry.</string>
     <string name="detail_learning">Press the key you want to bind (6 s)</string>
     <string name="detail_learn_fail">No key received in 6 s</string>
     <string name="detail_back_reserved">Use the Back key button below instead</string>
