@@ -30,7 +30,7 @@ TVMouse 借助电视自带的 adb 调试能力，把红外遥控器按键换算�
 ## 安装
 
 1. 电视打开「USB 调试 / ADB 调试」（海信：设置 → 关于 → 版本号连按开启开发者模式）。
-2. 安装 `tvmouse-v2.1.8-release.apk`。
+2. 安装 `tvmouse-v2.1.20-release.apk`。
 3. 打开 App → 点「启动鼠标」。首次连接电视会弹一次「允许 USB 调试」，勾选「一律允许」。
 4. 停止：点「释放遥控」，或按切换键切回遥控模式。
 
@@ -40,7 +40,7 @@ TVMouse 借助电视自带的 adb 调试能力，把红外遥控器按键换算�
 
 ```bash
 bash scripts/setup-toolchain.sh
-bash scripts/build-release.sh 2.1.8 20 tvmouse-v2.1.8-release
+bash scripts/build-release.sh 2.1.20 32 tvmouse-v2.1.20-release
 ```
 
 构建脚本会在 `mousepad2/assets/` 自动生成 adb 密钥（不随仓库发布），并在构建后做隐私校验。
@@ -49,7 +49,7 @@ bash scripts/build-release.sh 2.1.8 20 tvmouse-v2.1.8-release
 
 ## 版本
 
-- 当前：**v2.1.8**
+- 当前：**v2.1.20**
 - 发布版使用独立的 adb 密钥，首次安装需在电视上授权一次。
 
 ## 适配

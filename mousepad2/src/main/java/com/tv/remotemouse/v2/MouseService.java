@@ -34,6 +34,11 @@ public class MouseService extends Service {
     private Thread worker;
     private volatile boolean quiet = false;   // 调参数触发的静默重启，不显示中间状态
     private final StringBuilder lineBuf = new StringBuilder();  // 守护进程 stdout 行缓冲
+    private boolean volHintShown = false;
+    private long unsupShownAt = 0;
+    /** 音量键注入用独立连接 + 单线程队列：input keyevent 约 1.4s，不能占用主连接 */
+    private final java.util.concurrent.ExecutorService keyExec =
+            java.util.concurrent.Executors.newSingleThreadExecutor();
 
     @Override
     public void onCreate() {
@@ -248,11 +253,13 @@ public class MouseService extends Service {
         else if (line.startsWith("STATE=ACTIVE")) setStatus("active", "detail_running");
         else if (line.startsWith("pt=")) setStatus("active", "detail_running");
         else if (line.startsWith("VOL=")) adjustVolume(line.substring(4));
+        else if (line.startsWith("UNSUP=")) showUnsupported();
     }
 
-    /** 音量键：鼠标设备通常不支持这些键码，改由 App 调 AudioManager（毫秒级）。
-        用 setStreamVolume(cur±1) 与电视原生音量键的步进保持一致（adjust 会一次跳 4 档）。 */
+    /** 音量键：接收器的鼠标设备不支持这些键码。
+        先改 Android 软件音量（音量条即时反馈），守护进程同时补发系统 KeyEvent 让电视真实音量跟上。 */
     private void adjustVolume(String what) {
+        showVolHintOnce();
         try {
             android.media.AudioManager am =
                     (android.media.AudioManager) getSystemService(Context.AUDIO_SERVICE);
@@ -269,6 +276,46 @@ public class MouseService extends Service {
             if (next != cur) {
                 am.setStreamVolume(stream, next, android.media.AudioManager.FLAG_SHOW_UI);
             }
+        } catch (Throwable ignored) { }
+        // 软件音量只是给音量条的即时反馈，电视真实音量要靠系统 KeyEvent
+        injectKey("up".equals(what) ? 24 : "down".equals(what) ? 25 : 164);
+    }
+
+    /** 用一条独立 adb 连接执行 input keyevent，让电视真实音量跟上 */
+    private void injectKey(int androidCode) {
+        keyExec.execute(() -> {
+            AdbClient c = null;
+            try {
+                String[] a = addr();
+                c = new AdbClient(a[0], Integer.parseInt(a[1]), 3000);
+                c.handshake(new AdbKey(this), 10000);
+                c.shell("input keyevent " + androidCode, 15000);
+            } catch (Throwable t) {
+                Log.w(TAG, "inject key failed: " + androidCode, t);
+            } finally {
+                if (c != null) try { c.close(); } catch (Exception ignored) { }
+            }
+        });
+    }
+
+    /** 接收器不支持的按键（侧键等）：限频提示，避免连按刷屏 */
+    private void showUnsupported() {
+        long now = System.currentTimeMillis();
+        if (now - unsupShownAt < 3000) return;
+        unsupShownAt = now;
+        new android.os.Handler(getMainLooper()).post(() ->
+                android.widget.Toast.makeText(this, R.string.key_unsupported,
+                        android.widget.Toast.LENGTH_SHORT).show());
+    }
+
+    /** 首次按音量键时提示一次：接收器不支持音量键 */
+    private void showVolHintOnce() {
+        if (volHintShown) return;
+        volHintShown = true;
+        try {
+            new android.os.Handler(getMainLooper()).post(() ->
+                    android.widget.Toast.makeText(this, R.string.vol_hint,
+                            android.widget.Toast.LENGTH_LONG).show());
         } catch (Throwable ignored) { }
     }
 

@@ -29,6 +29,7 @@
 #include <time.h>
 #include <linux/input.h>
 #include <sys/ioctl.h>
+#include <sys/wait.h>
 
 #define BACK_RIGHT 0
 #define BACK_SIDE  1
@@ -67,6 +68,8 @@ static long long g_skip_until = 0;   /* 回放期间忽略自己写回去的事�
    往里写音量/返回等键会被内核静默丢弃，必须先查能力再决定怎么发 */
 static unsigned char g_mkeys[(KEY_MAX + 7) / 8];
 static int g_mkeys_ok = 0;
+static int g_last_vol_code = -1;  /* 音量键去抖：遥控器短按会连发多个 down */
+static long long g_last_vol_ms = 0;
 
 static int mouse_supports(int code) {
     if (!g_mkeys_ok || code < 0 || code > KEY_MAX) return 1;
@@ -121,6 +124,21 @@ static void wheel(int fd, int dir) {
     emit(fd, EV_SYN, SYN_REPORT, 0);
 }
 
+/* 按键注入：fork 一个 input 进程（不阻塞主循环，也不经过临时 shell 被回收）。
+   直接 system() 会阻塞 1.4s；system("... &") 的后台进程会被这个 ROM 回收。 */
+static void inject_key_async(int android_code) {
+    if (android_code <= 0) return;
+    pid_t p = fork();
+    if (p == 0) {
+        int fd = open("/dev/null", O_RDWR);
+        if (fd >= 0) { dup2(fd, 0); dup2(fd, 1); dup2(fd, 2); }
+        char buf[12];
+        snprintf(buf, sizeof buf, "%d", android_code);
+        execl("/system/bin/input", "input", "keyevent", buf, (char *)NULL);
+        _exit(127);
+    }
+}
+
 /* Linux input 键码 → Android keycode（只列常用系统/媒体键） */
 static int android_key(int c) {
     switch (c) {
@@ -145,25 +163,26 @@ static int android_key(int c) {
 /* 普通键补发：优先写鼠标设备；设备不支持该键时交给 App 处理。
    音量/静音一律交给 App 用 AudioManager 调，延迟远低于 input keyevent（实测 1.4s）。 */
 static void pass_key(int code) {
+    /* 接收器的鼠标设备不支持音量键：
+       ① 先让 App 调 Android 软件音量（音量条即时反馈）
+       ② 再补发一次系统 KeyEvent，让电视真实音量跟上（input keyevent 约 1.4s） */
     if (code == KEY_VOLUMEUP || code == KEY_VOLUMEDOWN || code == KEY_MUTE) {
         printf("VOL=%s\n", code == KEY_VOLUMEUP ? "up"
                          : code == KEY_VOLUMEDOWN ? "down" : "mute");
         fflush(stdout);
+        /* 真实音量由 App 侧通过独立 adb 连接执行 input keyevent 完成 */
         return;
     }
     if (code == KEY_HOME || code == KEY_HOMEPAGE) {
-        if (system("input keyevent 3 &") != 0) { /* 忽略 */ }
+        inject_key_async(3);
         return;
     }
     if (g_mfd < 0) return;
     if (!mouse_supports(code)) {
-        /* 设备没有这个键的能力，写进去也无效：退回 input keyevent 注入（慢，仅低频键） */
-        int a = android_key(code);
-        if (a > 0) {
-            char cmd[64];
-            snprintf(cmd, sizeof cmd, "input keyevent %d &", a);
-            if (system(cmd) != 0) { /* 忽略 */ }
-        }
+        /* 设备没有这个键的能力（侧键等）：告诉 App 弹提示，同时尽力兜底注入 */
+        printf("UNSUP=%d\n", code);
+        fflush(stdout);
+        inject_key_async(android_key(code));
         return;
     }
     emit(g_mfd, EV_KEY, code, 1);
@@ -312,7 +331,9 @@ int main(int argc, char **argv) {
 
     if (learn) return learn_mode(keydev);
 
-    int kfd = open(keydev, g_passthrough ? O_RDWR : O_RDONLY);
+    /* 红外设备需要可写：音量等系统键靠写回设备让电视走原生路径 */
+    int kfd = open(keydev, O_RDWR);
+    if (kfd < 0) kfd = open(keydev, O_RDONLY);
     if (kfd < 0) { fprintf(stderr, "open %s: %s\n", keydev, strerror(errno)); return 1; }
     /* 优先读写打开：需要 EVIOCGBIT 读按键能力，判断哪些键能直接写进设备 */
     int mfd = open(mousedev, O_RDWR);
@@ -369,6 +390,7 @@ int main(int argc, char **argv) {
     while (g_running) {
         int r = poll(&pfd, 1, 16);
         long long t = now_ms();
+        while (waitpid(-1, NULL, WNOHANG) > 0) { /* 回收注入子进程 */ }
 
         if (r > 0 && (pfd.revents & POLLIN)) {
             ssize_t n = read(kfd, &ev, sizeof ev);
@@ -425,6 +447,12 @@ int main(int argc, char **argv) {
                 } else if (ev.value == 1) {
                     int act = lookup(ev.code);
                     if (act < 0) act = default_action(ev.code);
+                    /* 音量/静音去抖：遥控器短按常连发多个 down，不去抖会一次加几十 */
+                    if (ev.code == KEY_VOLUMEUP || ev.code == KEY_VOLUMEDOWN || ev.code == KEY_MUTE) {
+                        if (ev.code == g_last_vol_code && t - g_last_vol_ms < 250) continue;
+                        g_last_vol_code = ev.code;
+                        g_last_vol_ms = t;
+                    }
                     do_action(act, ev.code);
                 }
             }
