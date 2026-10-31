@@ -1,1 +1,1 @@
-d7cd59cd8d7c7efd434b5d95fdfc22b0384ff12964474646828fdf3dddc4bb5e *tvmouse-v2.1.20-release.apk
+2d42ce57a5456ce638602a4f862f6cbbf00d2bed8e1745b4ce87ad1c2fd6bb56 *tvmouse-v2.1.22-release.apk

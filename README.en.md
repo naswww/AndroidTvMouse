@@ -30,7 +30,7 @@ All mappings can be rebound in the app.
 ## Install
 
 1. Enable "USB debugging / ADB debugging" on the TV (Hisense: Settings → About → tap Build Number repeatedly to unlock Developer options).
-2. Install `tvmouse-v2.1.20-release.apk`.
+2. Install `tvmouse-v2.1.22-release.apk`.
 3. Open the app → tap **Start Mouse**. On first connection the TV shows an "Allow USB debugging" prompt; check "Always allow".
 4. To stop: tap **Release Remote**, or press the toggle key to switch back to remote mode.
 
@@ -40,7 +40,7 @@ Requires JDK 17 and the Android SDK (build-tools 34 / platform 34), Windows + Gi
 
 ```bash
 bash scripts/setup-toolchain.sh
-bash scripts/build-release.sh 2.1.20 32 tvmouse-v2.1.20-release
+bash scripts/build-release.sh 2.1.22 34 tvmouse-v2.1.22-release
 ```
 
 The build script generates an adb key under `mousepad2/assets/` if missing (never committed), and runs a privacy check after building.
@@ -49,7 +49,7 @@ The build script generates an adb key under `mousepad2/assets/` if missing (neve
 
 ## Version
 
-- Current: **v2.1.20**
+- Current: **v2.1.22**
 - The release build uses a dedicated adb key; authorize it once on the TV at first install.
 
 ## Compatibility

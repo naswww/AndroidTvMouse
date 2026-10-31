@@ -27,6 +27,8 @@
     <string name="detail_no_mouse">No mouse device found. Check the receiver / USB port.</string>
     <string name="vol_hint">Receiver has no volume keys; using software volume. TV volume syncs in about 1s.</string>
     <string name="key_unsupported">Receiver does not support this key; cannot map a remote function.</string>
+    <string name="mode_mouse">Switched to mouse mode</string>
+    <string name="mode_remote">Switched to remote mode</string>
     <string name="detail_grab_failed">Cannot grab the remote device. Reboot the TV and retry.</string>
     <string name="detail_learning">Press the key you want to bind (6 s)</string>
     <string name="detail_learn_fail">No key received in 6 s</string>

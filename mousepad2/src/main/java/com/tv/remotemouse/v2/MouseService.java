@@ -133,6 +133,7 @@ public class MouseService extends Service {
 
     private void takeover() {
         AdbClient c = null;
+        volHintShown = false;   // 每次启动鼠标后，第一次按音量键都提示一次
         try {
             if (!quiet) setStatus("connecting", "detail_connecting");
             quiet = false;
@@ -249,8 +250,13 @@ public class MouseService extends Service {
         if (line.isEmpty()) return;
         if (line.startsWith("ERR=no_mouse")) setStatus("fail", "detail_no_mouse");
         else if (line.startsWith("ERR=grab_failed")) setStatus("fail", "detail_grab_failed");
-        else if (line.startsWith("STATE=PAUSED")) setStatus("paused", "detail_paused");
-        else if (line.startsWith("STATE=ACTIVE")) setStatus("active", "detail_running");
+        else if (line.startsWith("STATE=PAUSED")) {
+            setStatus("paused", "detail_paused");
+            toast(R.string.mode_remote);
+        } else if (line.startsWith("STATE=ACTIVE")) {
+            setStatus("active", "detail_running");
+            toast(R.string.mode_mouse, 2600);
+        }
         else if (line.startsWith("pt=")) setStatus("active", "detail_running");
         else if (line.startsWith("VOL=")) adjustVolume(line.substring(4));
         else if (line.startsWith("UNSUP=")) showUnsupported();
@@ -298,6 +304,16 @@ public class MouseService extends Service {
         });
     }
 
+    private void toast(int resId) {
+        toast(resId, 0);
+    }
+
+    /** 电视切到鼠标模式时会先弹自己的「U 模式」提示，延迟一下再弹我们的，避免被盖住 */
+    private void toast(int resId, long delayMs) {
+        new android.os.Handler(getMainLooper()).postDelayed(() ->
+                android.widget.Toast.makeText(this, resId, android.widget.Toast.LENGTH_SHORT).show(), delayMs);
+    }
+
     /** 接收器不支持的按键（侧键等）：限频提示，避免连按刷屏 */
     private void showUnsupported() {
         long now = System.currentTimeMillis();
@@ -313,9 +329,7 @@ public class MouseService extends Service {
         if (volHintShown) return;
         volHintShown = true;
         try {
-            new android.os.Handler(getMainLooper()).post(() ->
-                    android.widget.Toast.makeText(this, R.string.vol_hint,
-                            android.widget.Toast.LENGTH_LONG).show());
+            toast(R.string.vol_hint);
         } catch (Throwable ignored) { }
     }
 
