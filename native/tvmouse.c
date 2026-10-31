@@ -63,6 +63,16 @@ static int g_pos_x = -1, g_pos_y = -1;  /* 估算光标位置，-1=未初始化 
 static int g_passthrough = 0;        /* -p：释放态仍独占，按键回放给红外设备 */
 static long long g_skip_until = 0;   /* 回放期间忽略自己写回去的事件 */
 
+/* 鼠标设备支持的 EV_KEY 位图：换接收器后常见"只支持鼠标按钮"的设备，
+   往里写音量/返回等键会被内核静默丢弃，必须先查能力再决定怎么发 */
+static unsigned char g_mkeys[(KEY_MAX + 7) / 8];
+static int g_mkeys_ok = 0;
+
+static int mouse_supports(int code) {
+    if (!g_mkeys_ok || code < 0 || code > KEY_MAX) return 1;
+    return (g_mkeys[code / 8] >> (code % 8)) & 1;
+}
+
 static struct { int code; int act; } g_map[MAX_MAP];
 static int g_mapn = 0;
 
@@ -111,13 +121,51 @@ static void wheel(int fd, int dir) {
     emit(fd, EV_SYN, SYN_REPORT, 0);
 }
 
-/* 普通键补发：写鼠标设备（本机实测 BACK/VOLUME 生效，HOME 不生效） */
+/* Linux input 键码 → Android keycode（只列常用系统/媒体键） */
+static int android_key(int c) {
+    switch (c) {
+        case KEY_BACK:            return 4;
+        case KEY_HOME:
+        case KEY_HOMEPAGE:        return 3;
+        case KEY_MENU:            return 82;
+        case KEY_POWER:           return 26;
+        case KEY_PLAYPAUSE:       return 85;
+        case KEY_STOP:            return 86;
+        case KEY_NEXTSONG:        return 87;
+        case KEY_PREVIOUSSONG:    return 88;
+        case KEY_REWIND:          return 89;
+        case KEY_FASTFORWARD:     return 90;
+        case KEY_CHANNELUP:       return 166;
+        case KEY_CHANNELDOWN:     return 167;
+        case KEY_INFO:            return 165;
+        default:                  return -1;
+    }
+}
+
+/* 普通键补发：优先写鼠标设备；设备不支持该键时交给 App 处理。
+   音量/静音一律交给 App 用 AudioManager 调，延迟远低于 input keyevent（实测 1.4s）。 */
 static void pass_key(int code) {
+    if (code == KEY_VOLUMEUP || code == KEY_VOLUMEDOWN || code == KEY_MUTE) {
+        printf("VOL=%s\n", code == KEY_VOLUMEUP ? "up"
+                         : code == KEY_VOLUMEDOWN ? "down" : "mute");
+        fflush(stdout);
+        return;
+    }
     if (code == KEY_HOME || code == KEY_HOMEPAGE) {
         if (system("input keyevent 3 &") != 0) { /* 忽略 */ }
         return;
     }
     if (g_mfd < 0) return;
+    if (!mouse_supports(code)) {
+        /* 设备没有这个键的能力，写进去也无效：退回 input keyevent 注入（慢，仅低频键） */
+        int a = android_key(code);
+        if (a > 0) {
+            char cmd[64];
+            snprintf(cmd, sizeof cmd, "input keyevent %d &", a);
+            if (system(cmd) != 0) { /* 忽略 */ }
+        }
+        return;
+    }
     emit(g_mfd, EV_KEY, code, 1);
     emit(g_mfd, EV_SYN, SYN_REPORT, 0);
     emit(g_mfd, EV_KEY, code, 0);
@@ -238,6 +286,7 @@ int main(int argc, char **argv) {
     const char *mapfile = "/data/local/tmp/tvmouse.map";
     int grab = 0, keepalive = 1, learn = 0;
     double speed = 900.0;
+    char mbuf[64];   /* 自动识别的鼠标设备路径，必须活到 main 结束 */
 
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-g")) grab = 1;
@@ -265,13 +314,15 @@ int main(int argc, char **argv) {
 
     int kfd = open(keydev, g_passthrough ? O_RDWR : O_RDONLY);
     if (kfd < 0) { fprintf(stderr, "open %s: %s\n", keydev, strerror(errno)); return 1; }
-    int mfd = open(mousedev, O_WRONLY);
+    /* 优先读写打开：需要 EVIOCGBIT 读按键能力，判断哪些键能直接写进设备 */
+    int mfd = open(mousedev, O_RDWR);
+    if (mfd < 0) mfd = open(mousedev, O_WRONLY);
     if (mfd < 0) {
-        char mbuf[64];
         const char *found = find_mouse_dev(mbuf, sizeof mbuf);
         if (found) {
             mousedev = found;
-            mfd = open(mousedev, O_WRONLY);
+            mfd = open(mousedev, O_RDWR);
+            if (mfd < 0) mfd = open(mousedev, O_WRONLY);
         }
     }
     if (mfd < 0) {
@@ -282,6 +333,7 @@ int main(int argc, char **argv) {
         return 3;
     }
     g_mfd = mfd;
+    if (ioctl(mfd, EVIOCGBIT(EV_KEY, sizeof g_mkeys), g_mkeys) >= 0) g_mkeys_ok = 1;
 
     load_map(mapfile);
 

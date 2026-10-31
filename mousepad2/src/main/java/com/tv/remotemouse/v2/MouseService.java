@@ -33,6 +33,7 @@ public class MouseService extends Service {
     private volatile AdbClient live;
     private Thread worker;
     private volatile boolean quiet = false;   // 调参数触发的静默重启，不显示中间状态
+    private final StringBuilder lineBuf = new StringBuilder();  // 守护进程 stdout 行缓冲
 
     @Override
     public void onCreate() {
@@ -168,13 +169,7 @@ public class MouseService extends Service {
                     + (toggle > 0 ? " -t " + toggle : "")
                     + (grab ? " -g" : "");
             // 前台挂着跑，连接不断，守护进程就不断
-            c.shell(cmd, 0, chunk -> {
-                if (chunk.contains("ERR=no_mouse")) setStatus("fail", "detail_no_mouse");
-                else if (chunk.contains("ERR=grab_failed")) setStatus("fail", "detail_grab_failed");
-                else if (chunk.contains("STATE=PAUSED")) setStatus("paused", "detail_paused");
-                else if (chunk.contains("STATE=ACTIVE")) setStatus("active", "detail_running");
-                else if (chunk.contains("pt=")) setStatus("active", "detail_running");
-            });
+            c.shell(cmd, 0, this::onDaemonData);
 
             setStatus("idle", "detail_exited");
         } catch (Throwable t) {
@@ -229,6 +224,52 @@ public class MouseService extends Service {
             if (code > 0) sb.append(code).append('=').append(a).append('\n');
         }
         return sb.toString();
+    }
+
+    /** 守护进程 stdout：按行切分，避免一个 chunk 被截断导致漏处理 */
+    private void onDaemonData(String chunk) {
+        synchronized (lineBuf) {
+            lineBuf.append(chunk);
+            int i;
+            while ((i = lineBuf.indexOf("\n")) >= 0) {
+                String line = lineBuf.substring(0, i).trim();
+                lineBuf.delete(0, i + 1);
+                handleLine(line);
+            }
+            if (lineBuf.length() > 8192) lineBuf.setLength(0);   // 防御：异常输出不累积
+        }
+    }
+
+    private void handleLine(String line) {
+        if (line.isEmpty()) return;
+        if (line.startsWith("ERR=no_mouse")) setStatus("fail", "detail_no_mouse");
+        else if (line.startsWith("ERR=grab_failed")) setStatus("fail", "detail_grab_failed");
+        else if (line.startsWith("STATE=PAUSED")) setStatus("paused", "detail_paused");
+        else if (line.startsWith("STATE=ACTIVE")) setStatus("active", "detail_running");
+        else if (line.startsWith("pt=")) setStatus("active", "detail_running");
+        else if (line.startsWith("VOL=")) adjustVolume(line.substring(4));
+    }
+
+    /** 音量键：鼠标设备通常不支持这些键码，改由 App 调 AudioManager（毫秒级）。
+        用 setStreamVolume(cur±1) 与电视原生音量键的步进保持一致（adjust 会一次跳 4 档）。 */
+    private void adjustVolume(String what) {
+        try {
+            android.media.AudioManager am =
+                    (android.media.AudioManager) getSystemService(Context.AUDIO_SERVICE);
+            if (am == null) return;
+            int stream = android.media.AudioManager.STREAM_MUSIC;
+            if ("mute".equals(what)) {
+                am.adjustStreamVolume(stream, android.media.AudioManager.ADJUST_TOGGLE_MUTE,
+                        android.media.AudioManager.FLAG_SHOW_UI);
+                return;
+            }
+            int cur = am.getStreamVolume(stream);
+            int max = am.getStreamMaxVolume(stream);
+            int next = "up".equals(what) ? Math.min(max, cur + 1) : Math.max(0, cur - 1);
+            if (next != cur) {
+                am.setStreamVolume(stream, next, android.media.AudioManager.FLAG_SHOW_UI);
+            }
+        } catch (Throwable ignored) { }
     }
 
     private void setStatus(String state, String detail) {
