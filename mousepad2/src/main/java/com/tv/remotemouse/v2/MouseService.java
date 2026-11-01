@@ -259,7 +259,8 @@ public class MouseService extends Service {
         }
         else if (line.startsWith("pt=")) setStatus("active", "detail_running");
         else if (line.startsWith("VOL=")) adjustVolume(line.substring(4));
-        else if (line.startsWith("UNSUP=")) showUnsupported();
+        else if (line.startsWith("UNSUP=")) onUnsupportedKey(line.substring(6));
+        else if (line.startsWith("PASS=")) injectLinuxKey(line.substring(5), false);
     }
 
     /** 音量键：接收器的鼠标设备不支持这些键码。
@@ -314,14 +315,45 @@ public class MouseService extends Service {
                 android.widget.Toast.makeText(this, resId, android.widget.Toast.LENGTH_SHORT).show(), delayMs);
     }
 
-    /** 接收器不支持的按键（侧键等）：限频提示，避免连按刷屏 */
-    private void showUnsupported() {
+    /** 接收器不支持的按键（菜单/侧键等）：能用 KeyEvent 模拟就模拟，模拟不了才提示无法映射。
+        注入走独立 adb 连接，和音量键同一条路径。 */
+    private void onUnsupportedKey(String linuxCode) {
+        int android = injectLinuxKey(linuxCode, true);
         long now = System.currentTimeMillis();
         if (now - unsupShownAt < 3000) return;
         unsupShownAt = now;
-        new android.os.Handler(getMainLooper()).post(() ->
-                android.widget.Toast.makeText(this, R.string.key_unsupported,
-                        android.widget.Toast.LENGTH_SHORT).show());
+        toast(android > 0 ? R.string.key_fallback : R.string.key_unsupported);
+    }
+
+    /** 按 Linux 键码注入对应 Android KeyEvent，返回映射到的 keycode（-1 = 无法映射） */
+    private int injectLinuxKey(String linuxCode, boolean showHint) {
+        try {
+            int android = androidKey(Integer.parseInt(linuxCode.trim()));
+            if (android > 0) injectKey(android);
+            return android;
+        } catch (Throwable t) {
+            return -1;
+        }
+    }
+
+    /** Linux input 键码 → Android keycode（只列常用系统/媒体键） */
+    private static int androidKey(int linux) {
+        switch (linux) {
+            case 158: return 4;      // KEY_BACK
+            case 102: case 172: return 3;   // KEY_HOME / HOMEPAGE
+            case 139: return 82;     // KEY_MENU
+            case 116: return 26;     // KEY_POWER
+            case 164: return 85;     // KEY_PLAYPAUSE
+            case 166: return 86;     // KEY_STOP
+            case 163: return 87;     // KEY_NEXTSONG
+            case 165: return 88;     // KEY_PREVIOUSSONG
+            case 168: return 89;     // KEY_REWIND
+            case 208: return 90;     // KEY_FASTFORWARD
+            case 402: return 166;    // KEY_CHANNELUP
+            case 403: return 167;    // KEY_CHANNELDOWN
+            case 358: return 165;    // KEY_INFO
+            default: return -1;
+        }
     }
 
     /** 首次按音量键时提示一次：接收器不支持音量键 */

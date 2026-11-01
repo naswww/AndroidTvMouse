@@ -29,7 +29,6 @@
 #include <time.h>
 #include <linux/input.h>
 #include <sys/ioctl.h>
-#include <sys/wait.h>
 
 #define BACK_RIGHT 0
 #define BACK_SIDE  1
@@ -124,42 +123,6 @@ static void wheel(int fd, int dir) {
     emit(fd, EV_SYN, SYN_REPORT, 0);
 }
 
-/* 按键注入：fork 一个 input 进程（不阻塞主循环，也不经过临时 shell 被回收）。
-   直接 system() 会阻塞 1.4s；system("... &") 的后台进程会被这个 ROM 回收。 */
-static void inject_key_async(int android_code) {
-    if (android_code <= 0) return;
-    pid_t p = fork();
-    if (p == 0) {
-        int fd = open("/dev/null", O_RDWR);
-        if (fd >= 0) { dup2(fd, 0); dup2(fd, 1); dup2(fd, 2); }
-        char buf[12];
-        snprintf(buf, sizeof buf, "%d", android_code);
-        execl("/system/bin/input", "input", "keyevent", buf, (char *)NULL);
-        _exit(127);
-    }
-}
-
-/* Linux input 键码 → Android keycode（只列常用系统/媒体键） */
-static int android_key(int c) {
-    switch (c) {
-        case KEY_BACK:            return 4;
-        case KEY_HOME:
-        case KEY_HOMEPAGE:        return 3;
-        case KEY_MENU:            return 82;
-        case KEY_POWER:           return 26;
-        case KEY_PLAYPAUSE:       return 85;
-        case KEY_STOP:            return 86;
-        case KEY_NEXTSONG:        return 87;
-        case KEY_PREVIOUSSONG:    return 88;
-        case KEY_REWIND:          return 89;
-        case KEY_FASTFORWARD:     return 90;
-        case KEY_CHANNELUP:       return 166;
-        case KEY_CHANNELDOWN:     return 167;
-        case KEY_INFO:            return 165;
-        default:                  return -1;
-    }
-}
-
 /* 普通键补发：优先写鼠标设备；设备不支持该键时交给 App 处理。
    音量/静音一律交给 App 用 AudioManager 调，延迟远低于 input keyevent（实测 1.4s）。 */
 static void pass_key(int code) {
@@ -174,15 +137,17 @@ static void pass_key(int code) {
         return;
     }
     if (code == KEY_HOME || code == KEY_HOMEPAGE) {
-        inject_key_async(3);
+        /* 系统键一律交给 App 用独立 adb 连接注入（守护进程自己 fork 的 input 不生效） */
+        printf("PASS=%d\n", code);
+        fflush(stdout);
         return;
     }
     if (g_mfd < 0) return;
     if (!mouse_supports(code)) {
-        /* 设备没有这个键的能力（侧键等）：告诉 App 弹提示，同时尽力兜底注入 */
+        /* 设备没有这个键的能力（菜单/侧键等）：上报给 App，由 App 用独立 adb 连接注入
+           （守护进程自己 fork 的 input 在 App 启动环境下不生效） */
         printf("UNSUP=%d\n", code);
         fflush(stdout);
-        inject_key_async(android_key(code));
         return;
     }
     emit(g_mfd, EV_KEY, code, 1);
@@ -390,7 +355,6 @@ int main(int argc, char **argv) {
     while (g_running) {
         int r = poll(&pfd, 1, 16);
         long long t = now_ms();
-        while (waitpid(-1, NULL, WNOHANG) > 0) { /* 回收注入子进程 */ }
 
         if (r > 0 && (pfd.revents & POLLIN)) {
             ssize_t n = read(kfd, &ev, sizeof ev);
