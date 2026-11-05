@@ -6,6 +6,11 @@ Control the on-screen mouse pointer with your TV's original IR remote — **no r
 
 TVMouse uses the TV's built-in adb debugging to translate IR remote keys into mouse actions.
 
+> **⚠️ Requirement: a wireless mouse USB receiver (2.4G USB dongle) must be plugged into the TV's USB port.**
+> The TV only renders an on-screen cursor after detecting a USB mouse device — pointer movement, click, and scroll all depend on it.
+> Without the receiver: the app starts, but no cursor is visible on screen.
+> Any common wireless mouse USB receiver (Logitech, Rapoo, Dell, etc.) works; no specific brand required.
+
 It was developed against a Hisense Vidda TV remote, to make Android tablet apps for video, reading, and stocks usable on a TV.
 
 Built with AI-assisted development: the approach, technical path, and code were explored and written with WorkBuddy and DeepSeek.
