@@ -10,6 +10,7 @@ import android.view.Gravity;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -38,6 +39,9 @@ public class MainActivity extends Activity {
     private int pollLeft = 0;
     private long lastVerify = 0;
     private SharedPreferences.OnSharedPreferenceChangeListener prefListener;
+    private boolean uiReady = false;
+    /** recreate() 后的新实例也要跳过静默分支，直接显示设置界面 */
+    private static volatile boolean skipSilentOnce = false;
 
     /** 返回键三档：值写进 cfg.back，显示用字符串资源 */
     private static final String[] BACK_MODES = {"right", "side", "back"};
@@ -61,6 +65,66 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        boolean skip = skipSilentOnce;
+        skipSilentOnce = false;
+        // 静默模式：冷启动先判定守护进程，再决定「直接接管」还是「显示设置界面」
+        if (!skip && b == null
+                && getSharedPreferences("cfg", MODE_PRIVATE).getBoolean("silent", false)) {
+            // 检测期间不布置任何界面，窗口保持透明；用户看不到设置页
+            getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(
+                    android.graphics.Color.TRANSPARENT));
+            Toast.makeText(this, R.string.silent_checking, Toast.LENGTH_SHORT).show();
+            checkSilentLaunch();
+            return;
+        }
+        setupUi();
+    }
+
+    /** 静默模式分支：仅查询一次守护进程，结果决定后续动作 */
+    private void checkSilentLaunch() {
+        new Thread(() -> {
+            boolean running;
+            try {
+                AdbKey key = new AdbKey(this);
+                String[] a = MouseService.splitAddr(
+                        getSharedPreferences("cfg", MODE_PRIVATE).getString("addr", "127.0.0.1:5555"));
+                AdbClient c = new AdbClient(a[0], Integer.parseInt(a[1]), 2500);
+                try {
+                    c.handshake(key, 6000);
+                    String out = c.shell("pgrep -x tvmouse || true", 3000);
+                    running = out.trim().matches("\\d+");
+                } finally {
+                    c.close();
+                }
+            } catch (Throwable t) {
+                // adb 不可用/未授权：必须退回设置界面，否则用户无法操作
+                runOnUiThread(() -> { if (!isFinishing() && !isDestroyed()) setupUi(); });
+                return;
+            }
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                SharedPreferences cfg = getSharedPreferences("cfg", MODE_PRIVATE);
+                if (running) {
+                    cfg.edit().remove("silent_try").apply();   // 接管成功，清除失败标记
+                    setupUi();
+                } else if (cfg.getBoolean("silent_try", false)) {
+                    // 上次静默启动没能把守护进程拉起来（缺接收器等），显示界面避免反复静默失败
+                    setupUi();
+                } else {
+                    cfg.edit().putBoolean("silent_try", true).apply();
+                    Intent i = new Intent(this, MouseService.class);
+                    i.setAction(MouseService.ACTION_TAKEOVER);
+                    if (Build.VERSION.SDK_INT >= 26) startForegroundService(i);
+                    else startService(i);
+                    Toast.makeText(this, R.string.silent_autostart, Toast.LENGTH_SHORT).show();
+                    finish();   // 不显示设置界面
+                }
+            });
+        }, "silent-check").start();
+    }
+
+    private void setupUi() {
+        uiReady = true;
         setContentView(R.layout.activity_main);
 
         status = findViewById(R.id.status);
@@ -84,6 +148,15 @@ public class MainActivity extends Activity {
         findViewById(R.id.btnRestore).setOnClickListener(v -> restorePreset());
         findViewById(R.id.btnAbout).setOnClickListener(v -> showAbout());
         findViewById(R.id.btnLang).setOnClickListener(v -> cycleLang());
+
+        // 静默模式开关：第一列底部
+        final CheckBox silent = findViewById(R.id.chkSilent);
+        silent.setChecked(getSharedPreferences("cfg", MODE_PRIVATE).getBoolean("silent", false));
+        silent.setOnCheckedChangeListener((v, checked) ->
+                getSharedPreferences("cfg", MODE_PRIVATE).edit()
+                        .putBoolean("silent", checked)
+                        .remove("silent_try")
+                        .apply());
 
         final EditText addr = findViewById(R.id.addr);
         addr.setText(getSharedPreferences("cfg", MODE_PRIVATE).getString("addr", "127.0.0.1:5555"));
@@ -144,6 +217,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (!uiReady) return;   // 静默检测期间没有界面，跳过状态刷新
         refresh();
         verifyState();
     }
@@ -578,6 +652,7 @@ public class MainActivity extends Activity {
     private void cycleLang() {
         int next = (langIndex() + 1) % LANGS.length;
         getSharedPreferences("cfg", MODE_PRIVATE).edit().putString("lang", LANGS[next]).apply();
+        skipSilentOnce = true;
         recreate();   // 重新创建 Activity，让 attachBaseContext 生效
     }
 

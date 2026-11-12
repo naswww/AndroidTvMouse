@@ -41,6 +41,11 @@
     <string name="toast_starting">正在启动鼠标…</string>
     <string name="toast_released">已释放</string>
 
+    <string name="silent_mode">静默模式</string>
+    <string name="silent_hint">勾选后打开应用：鼠标未运行则直接启动、不显示本页；已在后台运行才显示设置</string>
+    <string name="silent_checking">静默模式：检测中…</string>
+    <string name="silent_autostart">静默模式：已直接启动鼠标</string>
+
     <string name="section_params">参数</string>
     <string name="param_speed">最高速度</string>
     <string name="param_start">起步速度</string>
@@ -92,7 +97,7 @@
 
     <string name="btn_about">关于</string>
     <string name="about_title">关于</string>
-    <string name="about_body">安卓电视红外遥控鼠标。软件编码由 WorkBuddy 调用 DeepSeek 编写。\n\n版本 %1$s · %2$s\n许可证 GNU GPL v3.0\n\n· 发布版使用独立 adb 密钥，首次安装后电视会弹一次「允许 USB 调试」，授权即可。\n· 构建机请勿删除 build/debug.keystore，后续版本靠它覆盖升级。\n\nGitHub: https://github.com/naswww/TVmouse</string>
+    <string name="about_body">安卓电视红外遥控鼠标。软件编码由 WorkBuddy 调用 DeepSeek 编写。\n\n版本 %1$s · %2$s\n许可证 GNU GPL v3.0\n\n· 发布版使用独立 adb 密钥，首次安装后电视会弹一次「允许 USB 调试」，授权即可。\n· 构建机请勿删除 build/debug.keystore，后续版本靠它覆盖升级。\n\nGitHub: https://github.com/naswww/AndroidTvMouse</string>
     <string name="ok">确定</string>
 
     <string name="lang_prefix">语言：</string>

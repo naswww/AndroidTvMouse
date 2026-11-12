@@ -92,7 +92,7 @@
         <!-- ===== 三列主体 ===== -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="440dp"
+            android:layout_height="470dp"
             android:layout_marginTop="@dimen/space_3"
             android:orientation="horizontal">
 
@@ -207,6 +207,29 @@
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="1" />
+
+                <!-- 静默模式：第一列底部 -->
+                <CheckBox
+                    android:id="@+id/chkSilent"
+                    android:layout_width="match_parent"
+                    android:layout_height="32dp"
+                    android:minHeight="0dp"
+                    android:gravity="center_vertical"
+                    android:text="@string/silent_mode"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_body"
+                    android:buttonTint="@color/accent"
+                    android:stateListAnimator="@null" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/space_2"
+                    android:text="@string/silent_hint"
+                    android:textColor="@color/text_muted"
+                    android:textSize="@dimen/text_caption"
+                    android:maxLines="2"
+                    android:ellipsize="end" />
 
                 <LinearLayout
                     android:layout_width="match_parent"

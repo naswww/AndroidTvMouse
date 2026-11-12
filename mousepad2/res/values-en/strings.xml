@@ -41,6 +41,11 @@
     <string name="toast_starting">Starting mouse…</string>
     <string name="toast_released">Released</string>
 
+    <string name="silent_mode">Silent mode</string>
+    <string name="silent_hint">When on: launching this app starts the mouse directly without showing this screen if it is not running; settings appear only when it is already running in the background</string>
+    <string name="silent_checking">Silent mode: checking…</string>
+    <string name="silent_autostart">Silent mode: mouse started</string>
+
     <string name="section_params">Parameters</string>
     <string name="param_speed">Max Speed</string>
     <string name="param_start">Start Speed</string>
@@ -92,7 +97,7 @@
 
     <string name="btn_about">About</string>
     <string name="about_title">About</string>
-    <string name="about_body">Android TV IR remote mouse. Code written with WorkBuddy using DeepSeek.\n\nVersion %1$s · %2$s\nLicense GNU GPL v3.0\n\n· The release build uses a dedicated adb key. On first launch the TV shows an Allow USB debugging prompt once — just authorize it.\n· Do not delete build/debug.keystore on the build machine; future versions need it to upgrade in place.\n\nGitHub: https://github.com/naswww/TVmouse</string>
+    <string name="about_body">Android TV IR remote mouse. Code written with WorkBuddy using DeepSeek.\n\nVersion %1$s · %2$s\nLicense GNU GPL v3.0\n\n· The release build uses a dedicated adb key. On first launch the TV shows an Allow USB debugging prompt once — just authorize it.\n· Do not delete build/debug.keystore on the build machine; future versions need it to upgrade in place.\n\nGitHub: https://github.com/naswww/AndroidTvMouse</string>
     <string name="ok">OK</string>
 
     <string name="lang_prefix">Lang: </string>
